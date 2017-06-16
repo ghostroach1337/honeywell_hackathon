@@ -1,1 +1,1 @@
-# honeywell_hackathon
+# Honeywell Hackathon 2017
