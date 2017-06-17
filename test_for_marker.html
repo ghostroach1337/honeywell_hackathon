@@ -1,11 +1,29 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./datepicker.css">
+    <!-- <link rel="stylesheet" href="/resources/demos/style.css"> -->
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+
+      table {
+        font-size: 1em;
+      }
+
+      .ui-draggable, .ui-droppable {
+        background-position: top;
+      }
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
       #map {
-        height: 100%;
+        height: 95%;
+        
+        margin-top: 0.5em;
       }
       /* Optional: Makes the sample page fill the window. */
       html, body {
@@ -14,11 +32,66 @@
         padding: 0;
       }
     </style>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> -->
   </head>
   <body>
+  
+  <div id="date_pick" style="margin-top: 0.4em; margin-left: 0.7em;">
+    <label style="font-weight: bold;">Select a time range    |  </label>
+    <label for="from">From</label>
+    <input type="text" id="from" name="from">
+    <label for="to">to</label>
+    <input type="text" id="to" name="to">
+  </div>
+  <label style="position: absolute; left:50em; top: 0.5em; font-weight: bold; ">Upload file</label>
+  <div style="position: absolute; left:56em; top: 0.4em; ">    
+    <form action = "http://localhost:8000/uploader" method = "POST" 
+         enctype = "multipart/form-data">
+         <input type = "file" name = "file" />
+         <input type = "submit"/>
+    </form>
+  </div>
     <div id="map"></div>
     <script>
+      var to=$('#datepicker');
+      var fro=$('#datepicker');
+      $( function() {
+        var dateFormat = "mm/dd/yy";
+           fro = $( "#from" )
+            .datepicker({
+              changeMonth: true,
+              changeYear: true,
+            })
+            .on( "change", function() {
+              to.datepicker( "option", "minDate", getDate( this ) );              
+              initMap();
+            });
+           to = $( "#to" ).datepicker({
+            changeMonth: true,
+            changeYear: true,
+          })
+          .on( "change", function() {
+            fro.datepicker( "option", "maxDate", getDate( this ) );
+            var tq=new Date(to.val());
+            var tt=tq.getTime()/1000;
+            initMap();
+          });
+     
+        function getDate( element ) {
+          var date;
+          try {
+            date = $.datepicker.parseDate( dateFormat, element.value );
+          } catch( error ) {
+            date = null;
+          }
+     
+          return date;
+        }
+
+      } );
+
+      var dict = {};
+
       var map;
       var json="./loc_sample.json";
       var infowindow;
@@ -349,26 +422,26 @@
 
         $.getJSON(json, function(json1){
             $.each(json1.locations, function(key,data) {
-              var today=new Date();
               var date_time =new Date(parseInt(data.timestampMs)); 
+
+              var to_ts=new Date(to.val());
+              to_ts=to_ts.getTime();
+              var fro_ts=new Date(fro.val());
+              fro_ts=fro_ts.getTime();
+
+              if(date_time<=to_ts && date_time>=fro_ts) {
               try {
                 var act = data.activity[0].activity[0].type;
               }
               catch(err){
                 var act="";
               }
-              // if(today.getUTCMonth()!=date_time.getUTCMonth())
-              // {
-              //   return false;
-              // }
-              if(i>1000)
-              {
-                return false;
-              }
               if(data.accuracy>0)
               {
                 cur_lat=data.latitudeE7/10000000;
                 cur_lng=data.longitudeE7/10000000;
+                // cur_lat=cur_lat.toFixed(4);
+                //cur_lng=cur_lng.toFixed(4);
                 cur_accuracy=data.accuracy;
                 var latLng=new google.maps.LatLng(cur_lat, cur_lng);
                 geocoder.geocode({'location': latLng}, function(results, status) {
@@ -381,36 +454,25 @@
                     address="";
                   }        
 
-                  console.log(i);      
                   if(i != 0){                  
                     if((Math.abs(cur_lat-prev_lat)<lat_var) && (Math.abs(cur_lng-prev_lng)<lng_var)) {
-                      console.log('marker is close to prev marker');
                       if(cur_accuracy < prev_accuracy)  {
                         prev_latLng = new google.maps.LatLng(prev_lat, prev_lng);
                         var marker = new google.maps.Marker({
                           position: prev_latLng,
                           map: map
                         });
-                        cur_accuracy = prev_accuracy;    
-                        console.log('current acc < prev_accuracy');                    
+                        cur_accuracy = prev_accuracy;                      
                       }
                       else {
-
-                        console.log(prev_marker.getPosition().lat());
-                        console.log(prev_marker.getPosition().lng());
-                          console.log('=..=');
                         prev_marker.setPosition(latLng);
-                        console.log(prev_marker.getPosition().lat());
-                        console.log(prev_marker.getPosition().lng());
                         var marker = new google.maps.Marker({
                           position: latLng,
                           map: map
                         });
-                        console.log('current acc > prev_accuracy');
                       }
                     }
                     else {
-                      console.log('marker is far from prev marker');
                       var marker = new google.maps.Marker({
                         position: latLng,
                         map: map
@@ -423,7 +485,6 @@
                     prev_latLng=latLng;
                   }
                   else {
-                    console.log('1st marker');
                     var marker = new google.maps.Marker({
                         position: latLng,
                         map: map
@@ -434,10 +495,6 @@
                       prev_lng=cur_lng;
                       prev_latLng=latLng;
                   }                          
-                  console.log('current latlng');
-                  console.log(cur_lat);     
-                  console.log(cur_lng);     
-                  console.log('_______');
                     // var marker = new google.maps.Marker({
                     //   position: latLng,
                     //   map: map
@@ -445,7 +502,7 @@
 
                     var infowincontent = document.createElement('div');
                     var strong = document.createElement('strong');
-                    strong.textContent = i;
+                    strong.textContent = address;
                     infowincontent.appendChild(strong);
                     infowincontent.appendChild(document.createElement('br'));
                     
@@ -461,9 +518,11 @@
                                         
                     bindInfoWindow(marker, map, infowindow, infowincontent);  
                      i = i + 1;   
+                     
 
                 });                       
               }
+            }
 
             });
         });        
@@ -481,7 +540,9 @@
 
     </script>
     <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBAdEFaXkevxngou6CMKLPN-Y7cSvE3Es  &callback=initMap">
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8VwjEWJIrkjv1TJnbFUkDwVSHvYvoSys&callback=initMap">
     </script>
+
+    
   </body>
 </html>
