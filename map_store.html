@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="./datepicker.css">
+    <!-- <link rel="stylesheet" href="/resources/demos/style.css"> -->
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <style>
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+      }
+      .ui-draggable, .ui-droppable {
+        background-position: top;
+      }
+      #map {
+        height: 96.5%;
+        
+        margin-top: 0.5em;
+      }
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        overflow-y: hidden;
+        overflow-x: hidden;
+      }
+    </style>
+  </head>
+  <body>
+
+  <!-- Datepicker -->
+  <div id="date_pick" style="margin-top: 0.4em; margin-left: 0.7em;">
+    <label style="font-weight: bold;">Select a time range    |  </label>
+    <label for="from">From</label>
+    <input type="text" id="from" name="from">
+    <label for="to">to</label>
+    <input type="text" id="to" name="to">    
+  </div>
+
+  <!-- Button takes you to upload page -->
+  <input style="position: absolute; left: 35%; top: 6px;" type="button" value="Go back to upload page" onclick="location='upload.html'" />
+
+  <!-- Map starts here -->
+    <div id="map"></div>
+    <script>
+      var to=$('#datepicker');
+      var fro=$('#datepicker');
+      $( function() {
+        var dateFormat = "mm/dd/yy";
+           fro = $( "#from" )
+            .datepicker({
+              changeMonth: true,        // Allow change of month and year
+              changeYear: true,
+            })
+            .on( "change", function() {
+              to.datepicker( "option", "minDate", getDate( this ) );              
+              initMap();                // Reloads the map
+            });
+           to = $( "#to" ).datepicker({
+            changeMonth: true,          // Allow change of month and year
+            changeYear: true,
+          })
+          .on( "change", function() {
+            fro.datepicker( "option", "maxDate", getDate( this ) );
+            var tq=new Date(to.val());
+            var tt=tq.getTime()/1000;
+            initMap();                  // Reloads the map
+          });
+     
+        function getDate( element ) {
+          var date;
+          try {
+            date = $.datepicker.parseDate( dateFormat, element.value );
+          } catch( error ) {
+            date = null;
+          }     
+          return date;
+        }
+      } );
+
+      var json="./loc_sample.json";
+      var infowindow;
+      var i = 0;
+      var dict = [];
+
+      function initMap() {
+        var styledMapType = new google.maps.StyledMapType(
+                [
+                  {
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#1d2c4d"
+                      }
+                    ]
+                  },
+                  {
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#8ec3b9"
+                      }
+                    ]
+                  },
+                  {
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#1a3646"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.country",
+                    "elementType": "geometry.stroke",
+                    "stylers": [
+                      {
+                        "color": "#4b6878"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.land_parcel",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.land_parcel",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#64779e"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.neighborhood",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "administrative.province",
+                    "elementType": "geometry.stroke",
+                    "stylers": [
+                      {
+                        "color": "#4b6878"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "landscape.man_made",
+                    "elementType": "geometry.stroke",
+                    "stylers": [
+                      {
+                        "color": "#334e87"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "landscape.natural",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#023e58"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#283d6a"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#6f9ba5"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#1d2c4d"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "geometry.fill",
+                    "stylers": [
+                      {
+                        "color": "#023e58"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "poi.park",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#3C7680"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#304a7d"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "labels",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "labels.icon",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#98a5be"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#1d2c4d"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#2c6675"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "geometry.stroke",
+                    "stylers": [
+                      {
+                        "color": "#255763"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#b0d5ce"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "road.highway",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#023e58"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#98a5be"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit",
+                    "elementType": "labels.text.stroke",
+                    "stylers": [
+                      {
+                        "color": "#1d2c4d"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit.line",
+                    "elementType": "geometry.fill",
+                    "stylers": [
+                      {
+                        "color": "#283d6a"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "transit.station",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#3a4762"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "geometry",
+                    "stylers": [
+                      {
+                        "color": "#0e1626"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "labels.text",
+                    "stylers": [
+                      {
+                        "visibility": "off"
+                      }
+                    ]
+                  },
+                  {
+                    "featureType": "water",
+                    "elementType": "labels.text.fill",
+                    "stylers": [
+                      {
+                        "color": "#4e6d70"
+                      }
+                    ]
+                  }
+                ],
+                {name: 'Night Mode'});
+        map = new google.maps.Map(document.getElementById('map'), {
+          zoom: 4,
+          mapTypeControlOptions: {
+            mapTypeIds: ['roadmap', 'satellite', 'hybrid', 'terrain',
+                    'night_mode']
+          },
+          center: new google.maps.LatLng(12.88,77.59),          
+        });
+    
+        infowindow = new google.maps.InfoWindow();   
+        var address;          
+        var count;
+        var variancefound = 0;
+        var map;
+        var convert;
+        var lat1,lat2,lon1,lon2;
+
+        // Loading the JSON file
+        $.getJSON(json, function(json1){
+            // Looping through the JSON file
+            $.each(json1.locations, function(key,data) {       
+              convert = new Date(parseInt(data.timestampMs)) ;
+              var to_ts = new Date(to.val());
+              to_ts = to_ts.getTime();
+              var fro_ts = new Date(fro.val());
+              fro_ts = fro_ts.getTime();
+
+              // Checking if the location timestamp is between user defined time range
+              if(convert <= to_ts && convert >= fro_ts){
+                if (i  == 0) {      // If first location
+                  try {
+                  var act = data.activity[0].activity[0].type;
+                  }
+                  catch(err){
+                    var act="UNKNOWN";
+                  }
+                  dict.push({date_time : [new Date(parseInt(data.timestampMs))] , 
+                       cur_lat : data.latitudeE7 / 10000000 ,
+                       cur_lon : data.longitudeE7 / 10000000 ,
+                       cur_accuracy : data.accuracy  , 
+                       frequency : 0 , 
+                       activity : act,
+                     });
+                  i = i + 1;
+                }
+                else{             // If not the first location
+                  for( count = 0 ;count < i ; count ++ ){   // Now we check if the present location has a marker closeby
+                    if(distanceCal(data.latitudeE7 / 10000000 , data.longitudeE7 / 10000000 , dict[count].cur_lat , dict[count].cur_lon)){
+                      variancefound = 1;
+                      if( data.accuracy > dict[count].accuracy ){     // Depending on who has higher accuracy, the other locations info is modified
+                        dict[count].cur_lat = data.latitudeE7 / 10000000 ;
+                        dict[count].cur_lon = data.longitudeE7 / 10000000 ;
+                      }                                           
+                      dict[count].frequency = dict[count].frequency + 1 ;     
+                      dict[count].date_time[dict[count].frequency] = new Date(parseInt(data.timestampMs));
+                    }
+                  }
+                  if(!variancefound){       // No marker is closeby
+                     try {
+                       var act = data.activity[0].activity[0].type;
+                      }
+                      catch(err){
+                        var act="UNKNOWN";
+                      }
+                      dict.push({date_time : [new Date(parseInt(data.timestampMs))] , 
+                      cur_lat : data.latitudeE7 / 10000000 ,
+                      cur_lon : data.longitudeE7 / 10000000 ,
+                      cur_accuracy : data.accuracy  , 
+                      frequency : 0 , 
+                      activity : act , 
+                      });
+                      i = i + 1;
+                  }
+                  variancefound = 0 ;
+               } 
+             }
+            });
+
+            // Loop through all stored locations
+            for(var putMarker = 0 ; putMarker  < i ; putMarker++){
+              if(dict[putMarker].frequency > 20){   //If the person has been here a lot, only then drop a marker
+                var latLng = new google.maps.LatLng(dict[putMarker].cur_lat, dict[putMarker].cur_lon);
+                var marker = new google.maps.Marker({
+                position: latLng,
+                          map: map
+                });
+              }
+              else {                                // Else person is probably in transit
+                var latLng = new google.maps.LatLng(dict[putMarker].cur_lat, dict[putMarker].cur_lon);
+                var marker = new google.maps.Marker({
+                          position: latLng,
+                          map: map,
+                          icon: {
+                            path: google.maps.SymbolPath.CIRCLE,
+                            fillOpacity: 0.3,
+                            fillColor: '#6F76FE',
+                            strokeOpacity: 0,
+                            strokeColor: '#6F76FE',
+                            strokeWeight: 3.0, 
+                            scale: 10
+                          }
+                });   
+              }
+
+              // Draw information windows for each marker
+              var infowincontent = document.createElement('div');
+
+              var date_d=dict[putMarker].date_time[0].toUTCString();
+              var text1 = document.createElement('strong');
+              text1.textContent = "Last visited on : ";
+              infowincontent.appendChild(text1);
+
+              var text2 = document.createElement('text');
+              text2.textContent =date_d;
+              infowincontent.appendChild(text2);
+              infowincontent.appendChild(document.createElement('br'));             
+            
+              var freq_text1 = document.createElement('strong');
+              freq_text1.textContent = "No of Times Visited : "  ;
+              infowincontent.appendChild(freq_text1);
+
+              var freq_text2 = document.createElement('text');
+              freq_text2.textContent = (dict[putMarker].frequency + 1);
+              infowincontent.appendChild(freq_text2);
+              infowincontent.appendChild(document.createElement('br'));  
+
+              var act_text1 = document.createElement('strong');
+              act_text1.textContent = "Activity : "  ;
+              infowincontent.appendChild(act_text1);
+
+              var act_text2 = document.createElement('text');
+              act_text2.textContent = (dict[putMarker].activity);
+              infowincontent.appendChild(act_text2);
+              infowincontent.appendChild(document.createElement('br'));       
+
+              bindInfoWindow(marker, map, infowindow, infowincontent);  
+            }  
+
+        }); 
+
+        map.mapTypes.set('night_mode', styledMapType);
+        map.setMapTypeId('night_mode');
+    }
+
+    function bindInfoWindow(marker, map, infowindow, strDescription) {
+      google.maps.event.addListener(marker, 'click', function () {
+          infowindow.setContent(strDescription);
+          infowindow.open(map, marker);
+      });
+    }
+
+    function distanceCal(lat1 , lon1  ,lat2 , lon2){
+      var variance = 0.0005;
+      var dist1  = (lat2 - lat1) * (lat2 - lat1) ;
+      var dist2  = (lon2 - lon1) * (lon2 - lon1) ;
+      var diff = Math.sqrt((dist2 + dist1));
+      if(diff < variance)
+      return 1;
+      else 
+      return 0 ;  
+    }
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD8VwjEWJIrkjv1TJnbFUkDwVSHvYvoSys&callback=initMap">
+    </script>  
+  </body>
+</html>
