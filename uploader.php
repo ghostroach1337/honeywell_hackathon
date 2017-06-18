@@ -10,11 +10,6 @@ if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $uploadfile)) {
 } else {
     echo "Possible file upload attack!\n";
 }
-
-echo 'Here is some more debugging info:';
-print_r($_FILES);
-
-
 ?>
 <body style="background-image: url(overlay_blur.jpg); background-repeat:no-repeat; top: 50em;">
 	<input style="position: absolute; left: 30%;" type="button" value="Go to map" onclick="location='my_test.html'" />
