@@ -12,6 +12,6 @@ if (move_uploaded_file($_FILES['fileToUpload']['tmp_name'], $uploadfile)) {
 }
 ?>
 <body style="background-image: url(overlay_blur.jpg); background-repeat:no-repeat; top: 50em;">
-	<input style="position: absolute; left: 30%;" type="button" value="Go to map" onclick="location='my_test.html'" />
+	<input style="position: absolute; left: 30%;" type="button" value="Go to map" onclick="location='map_upload.html'" />
 	<input style="position: absolute; left: 35%;" type="button" value="Go back" onclick="location='upload.html'" />
 </body>
